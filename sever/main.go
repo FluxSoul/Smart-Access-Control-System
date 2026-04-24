@@ -31,6 +31,8 @@ func main() {
 		_ = db.Close()
 	}(db)
 
+	gorm, err := database.InitDBGorm()
+
 	r := router.Setup()
 
 	quit := make(chan os.Signal, 1)
