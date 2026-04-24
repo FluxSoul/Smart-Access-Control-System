@@ -1,0 +1,59 @@
+services:
+  # 1. PostgreSQL: 存储业务数据 (用户、设备元数据)
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: iot_business
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - iot_network
+
+  # 2. InfluxDB: 存储时序数据 (传感器读数、历史轨迹)
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb_tsdb
+    restart: always
+    ports:
+      - "8086:8086" # HTTP API 端口
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    environment:
+      # 初始化设置 (首次启动后无需再次设置)
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password123
+      - DOCKER_INFLUXDB_INIT_ORG=myorg
+      - DOCKER_INFLUXDB_INIT_BUCKET=sensors
+    networks:
+      - iot_network
+
+  # 3. Mosquitto: 轻量级 MQTT 消息代理
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto_broker
+    restart: always
+    ports:
+      - "1883:1883" # MQTT TCP 端口
+      - "9001:9001" # MQTT WebSocket 端口 (可选，方便网页调试)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+    networks:
+      - iot_network
+
+networks:
+  iot_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  influxdb_data:
