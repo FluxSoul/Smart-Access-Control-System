@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">emqx-admin</string>
+    <string name="title_activity_main">emqx-admin</string>
+    <string name="package_name">com.cqupt.nodedesign.app</string>
+    <string name="custom_url_scheme">com.cqupt.nodedesign.app</string>
+</resources>
