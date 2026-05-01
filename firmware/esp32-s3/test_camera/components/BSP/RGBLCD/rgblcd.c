@@ -72,7 +72,7 @@ esp_lcd_panel_handle_t rgblcd_init(void)
 
     /* 配置RGB参数 */
     esp_lcd_rgb_panel_config_t panel_config = {     /* RGBLCD配置结构体 */
-        .num_fbs            = 2,                    /* 缓存区数量 */
+        .num_fbs            = 1,                    /* 缓存区数量 */
         .data_width         = 16,                   /* 数据宽度为16位 */
         .psram_trans_align  = 64,                   /* 在PSRAM中分配的缓冲区的对齐 */
         .clk_src            = LCD_CLK_SRC_DEFAULT,  /* RGBLCD外设时钟源 */
@@ -92,10 +92,10 @@ esp_lcd_panel_handle_t rgblcd_init(void)
             .v_res              = rgbdev.pheight,   /* 垂直分辨率,即帧中的行数 */
             .hsync_back_porch   = rgbdev.hbp,       /* 水平后廊,hsync和行活动数据开始之间的PCLK数 */
             .hsync_front_porch  = rgbdev.hfp,       /* 水平前廊,活动数据结束和下一个hsync之间的PCLK数 */
-            .hsync_pulse_width  = rgbdev.vsw,       /* 垂直同步宽度,单位:行数 */
+            .hsync_pulse_width  = rgbdev.hsw,       /* 垂直同步宽度,单位:行数 */
             .vsync_back_porch   = rgbdev.vbp,       /* 垂直后廊,vsync和帧开始之间的无效行数 */
             .vsync_front_porch  = rgbdev.vfp,       /* 垂直前廊,帧结束和下一个vsync之间的无效行数 */
-            .vsync_pulse_width  = rgbdev.hsw,       /* 水平同步宽度,单位:PCLK周期 */
+            .vsync_pulse_width  = rgbdev.vsw,       /* 水平同步宽度,单位:PCLK周期 */
             .flags = {
                 .pclk_active_neg = true,            /* RGB数据在下降沿计时 */
             },

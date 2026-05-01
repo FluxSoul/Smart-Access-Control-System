@@ -5,8 +5,9 @@
 #include "my_spi.h"
 #include "myiic.h"
 #include "xl9555.h"
-#include "spilcd.h"
 #include "esp_camera.h"
+#include "jpeg_decoder.h"
+#include "spilcd.h"
 #include <stdio.h>
 
 
@@ -17,7 +18,7 @@
 #define CAM_PIN_HREF    GPIO_NUM_48
 #define CAM_PIN_PCLK    GPIO_NUM_45
 #define CAM_PIN_XCLK    GPIO_NUM_NC
-#define CAM_PIN_SIOD    GPIO_NUM_NC
+#define CAM_PIN_SIOD    GPIO_NUM_NC // 已经被定义
 #define CAM_PIN_SIOC    GPIO_NUM_NC
 #define CAM_PIN_D0      GPIO_NUM_4
 #define CAM_PIN_D1      GPIO_NUM_5
@@ -61,16 +62,17 @@ static camera_config_t camera_config = {
     .pin_pclk = CAM_PIN_PCLK,
 
     /* XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental) */
-    .xclk_freq_hz = 20000000,
+    .xclk_freq_hz = 10000000,
     .ledc_timer = LEDC_TIMER_0,
     .ledc_channel = LEDC_CHANNEL_0,
 
-    .pixel_format = PIXFORMAT_JPEG,   /* YUV422,GRAYSCALE,RGB565,JPEG */
-    .frame_size = FRAMESIZE_VGA,       /* QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates */
+    .pixel_format = PIXFORMAT_RGB565,   /* YUV422,GRAYSCALE,RGB565,JPEG */
+    .frame_size = FRAMESIZE_HQVGA,       /* QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates */
 
     .jpeg_quality = 30,                 /* 0-63, for OV series camera sensors, lower number means higher quality */
-    .fb_count = 1,                      /* When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode */
-    .grab_mode = CAMERA_GRAB_LATEST,
+    .fb_count = 2,                      /* When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode */
+    .fb_location = CAMERA_FB_IN_PSRAM,
+    .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
 };
 
 /**
@@ -98,11 +100,9 @@ static esp_err_t init_camera(void)
 
     if (err != ESP_OK)
     {
-        ESP_LOGE("TAG", "Camera Init Failed");
+        ESP_LOGE("main", "Camera Init Failed");
         return err;
     }
-
-    sensor_t * s = esp_camera_sensor_get();
 
     return ESP_OK;
 }
@@ -113,17 +113,41 @@ esp_err_t camera_capture(){
     if (!fb) {
         return ESP_FAIL;
     }
-    //replace this with your own function
-    // process_image(fb->width, fb->height, fb->format, fb->buf, fb->len);
+
     printf("image len is %d, width is %d, height is %d\r\n", fb->len, fb->width, fb->height);
-    int l = fb->len;
+    
+    //int l = fb->len;
+    // for(int i = 0; i < l; i++) {
+    //     printf("%02x ", fb->buf[i]);
+    // }
+    // printf("\r\n");
 
-    for(int i = 0; i < l; i++) {
-        printf("%02x ", fb->buf[i]);
+    // 设置显示屏参数
+    uint16_t LCD_WIDTH = 480;
+    uint16_t LCD_HEIGHT = 272;
+
+    uint16_t img_w = fb->width;
+    uint16_t img_h = fb->height;
+
+    uint8_t *rgb_buf = (uint8_t *)heap_caps_aligned_alloc(4, img_w * img_h * 2, MALLOC_CAP_SPIRAM);
+    if (NULL == rgb_buf) {
+        ESP_LOGE("main", "RGB Buffer malloc failed! (Not enough PSRAM)");
+        esp_camera_fb_return(fb); // 释放摄像头缓冲
+        return ESP_FAIL;
     }
-    printf("\r\n");
+    
+    // 开始解码
+    if (!jpg2rgb565(fb->buf, fb->len, rgb_buf, JPG_SCALE_NONE)) {
+        free(rgb_buf);
+        esp_camera_fb_return(fb);
+        ESP_LOGE("main", "jpg 2 rgb565 failed");
+        return ESP_FAIL;
+    }
 
-    //return the frame buffer back to the driver for reuse
+    // 显示到屏幕
+    esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, img_w, img_h, rgb_buf);
+
+    free(rgb_buf);
     esp_camera_fb_return(fb);
     return ESP_OK;
 }
@@ -136,7 +160,6 @@ esp_err_t camera_capture(){
 void app_main(void)
 {
     esp_err_t ret;
-    camera_fb_t *fb = NULL;
 
     ret = nvs_flash_init();     /* 初始化NVS */
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -146,7 +169,7 @@ void app_main(void)
     }
 
     led_init();                 /* LED初始化 */
-    my_spi_init();              /* SPI初始化 */
+    my_spi_init();              /* SPI初始化 */ 
     myiic_init();               /* MYIIC初始化 */
     xl9555_init();              /* XL9555初始化 */
     spilcd_init();              /* SPILCD初始化 */
@@ -155,14 +178,24 @@ void app_main(void)
     spilcd_show_string(30, 50, 200, 16, 16, "ESP32-S3", RED);
     spilcd_show_string(30, 70, 200, 16, 16, "CAMERA TEST", RED);
     spilcd_show_string(30, 90, 200, 16, 16, "ATOM@ALIENTEK", RED);
-    vTaskDelay(pdMS_TO_TICKS(1500));
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    ESP_LOGI("main", "init success");
 
     while(1)
     {
-        camera_capture();
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        // camera_capture();
+        // vTaskDelay(pdMS_TO_TICKS(3000));
         // 现在，可以获取 jepg 图片
         // 1. 引入人脸识别算法，通过 16进制 jepg 提取人脸特征值
         // 2. 引入 jepg 转 RGB565，将 结果 打印到 RGB 屏幕上
+
+        camera_fb_t * fb = esp_camera_fb_get();
+        if (!fb) {
+            continue;
+        } else {
+            esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, fb->width, fb->height, fb->buf);
+            esp_camera_fb_return(fb);
+        }
     }
 }
