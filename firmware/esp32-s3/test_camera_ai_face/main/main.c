@@ -178,7 +178,6 @@ void app_main(void)
     spilcd_show_string(30, 50, 200, 16, 16, "ESP32-S3", RED);
     spilcd_show_string(30, 70, 200, 16, 16, "CAMERA TEST", RED);
     spilcd_show_string(30, 90, 200, 16, 16, "ATOM@ALIENTEK", RED);
-    spilcd_show_string(30, 180, 200, 16, 16, "Test", RED);
     vTaskDelay(pdMS_TO_TICKS(2000));
 
     ESP_LOGI("main", "init success");
