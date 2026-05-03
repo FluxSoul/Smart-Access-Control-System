@@ -3,14 +3,16 @@ set(src_dirs
             MYIIC
             XL9555
             MYSPI
-            SPILCD)
+            SPILCD
+            RGBLCD)
 
 set(include_dirs
             LED
             MYIIC
             XL9555
             MYSPI
-            SPILCD)
+            SPILCD
+            RGBLCD)
 
 set(requires
             driver
