@@ -1,24 +1,24 @@
 dependencies:
-  espressif/esp_jpeg:
+  espressif/esp-nn:
     dependencies: []
     source:
-      path: D:\future\Smart-Access-Control-System\firmware\esp32-s3\test_camera\components\Middlewares\espressif__esp_jpeg
+      path: D:\future\Smart-Access-Control-System\firmware\esp32-s3\test_camera_ai_face\components\Middlewares\espressif__esp-nn
       type: local
-    version: 1.3.1
+    version: 1.2.3
+  espressif/esp-tflite-micro:
+    dependencies: []
+    source:
+      path: D:\future\Smart-Access-Control-System\firmware\esp32-s3\test_camera_ai_face\components\Middlewares\espressif__esp-tflite-micro
+      type: local
+    version: 1.3.5
   idf:
     source:
       type: idf
     version: 5.5.4
-  lvgl/lvgl:
-    dependencies: []
-    source:
-      path: D:\future\Smart-Access-Control-System\firmware\esp32-s3\test_camera\components\Middlewares\lvgl__lvgl
-      type: local
-    version: 9.5.0
 direct_dependencies:
-- espressif/esp_jpeg
+- espressif/esp-nn
+- espressif/esp-tflite-micro
 - idf
-- lvgl/lvgl
-manifest_hash: 2d27ab93df0df46fee98d2ad2235edef98f6f333469ef04616be84b562e6c25b
+manifest_hash: c86353f8b603acd2dded48c1de14ab67de2275c201995cf24a44258718d6e841
 target: esp32s3
 version: 2.0.0

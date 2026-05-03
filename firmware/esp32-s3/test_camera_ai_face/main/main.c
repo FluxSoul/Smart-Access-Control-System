@@ -6,7 +6,6 @@
 #include "myiic.h"
 #include "xl9555.h"
 #include "esp_camera.h"
-#include "jpeg_decoder.h"
 #include "spilcd.h"
 #include <stdio.h>
 
@@ -107,50 +106,6 @@ static esp_err_t init_camera(void)
     return ESP_OK;
 }
 
-esp_err_t camera_capture(){
-    //acquire a frame
-    camera_fb_t * fb = esp_camera_fb_get();
-    if (!fb) {
-        return ESP_FAIL;
-    }
-
-    printf("image len is %d, width is %d, height is %d\r\n", fb->len, fb->width, fb->height);
-    
-    //int l = fb->len;
-    // for(int i = 0; i < l; i++) {
-    //     printf("%02x ", fb->buf[i]);
-    // }
-    // printf("\r\n");
-
-    // 设置显示屏参数
-    uint16_t LCD_WIDTH = 480;
-    uint16_t LCD_HEIGHT = 272;
-
-    uint16_t img_w = fb->width;
-    uint16_t img_h = fb->height;
-
-    uint8_t *rgb_buf = (uint8_t *)heap_caps_aligned_alloc(4, img_w * img_h * 2, MALLOC_CAP_SPIRAM);
-    if (NULL == rgb_buf) {
-        ESP_LOGE("main", "RGB Buffer malloc failed! (Not enough PSRAM)");
-        esp_camera_fb_return(fb); // 释放摄像头缓冲
-        return ESP_FAIL;
-    }
-    
-    // 开始解码
-    if (!jpg2rgb565(fb->buf, fb->len, rgb_buf, JPG_SCALE_NONE)) {
-        free(rgb_buf);
-        esp_camera_fb_return(fb);
-        ESP_LOGE("main", "jpg 2 rgb565 failed");
-        return ESP_FAIL;
-    }
-
-    // 显示到屏幕
-    esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, img_w, img_h, rgb_buf);
-
-    free(rgb_buf);
-    esp_camera_fb_return(fb);
-    return ESP_OK;
-}
 
 /**
  * @brief       程序入口

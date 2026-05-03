@@ -1,4 +1,10 @@
 dependencies:
+  espressif/esp32-camera:
+    dependencies: []
+    source:
+      path: D:\future\Smart-Access-Control-System\firmware\esp32-s3\test_camera\components\Middlewares\espressif__esp32-camera
+      type: local
+    version: 2.0.15
   espressif/esp_jpeg:
     dependencies: []
     source:
@@ -16,9 +22,10 @@ dependencies:
       type: local
     version: 9.5.0
 direct_dependencies:
+- espressif/esp32-camera
 - espressif/esp_jpeg
 - idf
 - lvgl/lvgl
-manifest_hash: 2d27ab93df0df46fee98d2ad2235edef98f6f333469ef04616be84b562e6c25b
+manifest_hash: 5e5153f8e49ef3b670721d9da6e89b6e947c5b09a2542f125e04338d2fc6905e
 target: esp32s3
 version: 2.0.0
